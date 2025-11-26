@@ -79,8 +79,10 @@ text
 
 ### Из кластера Kubernetes
 
-Подключение через clickhouse-client
-```kubectl exec -it clickhouse-0 -- clickhouse-client -u admin --password SecurePassword123!```
+Подключение через `clickhouse-client`
+```
+kubectl exec -it clickhouse-0 -- clickhouse-client -u admin --password SecurePassword123!
+```
 
 
 ### Извне кластера (port-forward)
