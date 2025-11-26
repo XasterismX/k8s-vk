@@ -1,0 +1,39 @@
+# =============================================================================
+# PersistentVolumeClaim для ClickHouse
+# =============================================================================
+# PVC запрашивает постоянное хранилище для данных ClickHouse.
+# Примечание: В StatefulSet используется volumeClaimTemplates, который
+# автоматически создает PVC для каждого пода. Этот файл нужен только если
+# вы хотите создать PVC заранее или использовать Deployment вместо StatefulSet.
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: clickhouse-data-pvc
+  labels:
+    app: clickhouse
+spec:
+  # Режим доступа к хранилищу
+  # ReadWriteOnce - чтение/запись только одним узлом (подходит для StatefulSet)
+  # ReadWriteMany - чтение/запись несколькими узлами одновременно
+  # ReadOnlyMany - только чтение несколькими узлами
+  accessModes:
+    - ReadWriteOnce
+  
+  # StorageClass определяет тип хранилища
+  # Если не указан, используется default StorageClass кластера
+  # Примеры: "standard", "fast", "ssd", "gp2" (AWS), "pd-ssd" (GCP)
+  # storageClassName: "standard"
+  
+  # Запрашиваемые ресурсы хранилища
+  resources:
+    requests:
+      # Размер хранилища для данных ClickHouse
+      # Укажите размер в соответствии с вашими потребностями
+      storage: 10Gi
+  
+  # Селектор для выбора конкретного PersistentVolume (опционально)
+  # Используется если нужно привязаться к конкретному PV
+  # selector:
+  #   matchLabels:
+  #     type: clickhouse-storage

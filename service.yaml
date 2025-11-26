@@ -1,0 +1,79 @@
+# =============================================================================
+# Service для доступа к ClickHouse
+# =============================================================================
+# Service обеспечивает стабильную точку доступа к подам ClickHouse
+# и балансировку нагрузки между репликами
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: clickhouse-service
+  labels:
+    app: clickhouse
+spec:
+  # Тип сервиса
+  # ClusterIP - доступ только внутри кластера
+  # NodePort - доступ через порт на узлах кластера
+  # LoadBalancer - внешний load balancer (требует поддержки от провайдера)
+  type: ClusterIP
+  
+  # Селектор для выбора подов, которые будут обслуживаться этим сервисом
+  selector:
+    app: clickhouse
+  
+  # Порты, которые предоставляет сервис
+  ports:
+  # HTTP интерфейс для API запросов
+  - name: http
+    port: 8123
+    targetPort: 8123
+    protocol: TCP
+  
+  # Native protocol для clickhouse-client
+  - name: native
+    port: 9000
+    targetPort: 9000
+    protocol: TCP
+  
+  # Interserver HTTP для внутренней коммуникации между репликами
+  - name: interserver
+    port: 9009
+    targetPort: 9009
+    protocol: TCP
+  
+  # ClusterIP: None создает headless service для StatefulSet
+  # Это позволяет прямой доступ к каждому поду по DNS имени
+  # clusterIP: None
+
+---
+# =============================================================================
+# Headless Service для StatefulSet
+# =============================================================================
+# Headless service позволяет обращаться к каждому поду напрямую
+# Имя пода будет доступно как: clickhouse-0.clickhouse-headless.default.svc.cluster.local
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: clickhouse-headless
+  labels:
+    app: clickhouse
+spec:
+  # Headless service (без ClusterIP)
+  clusterIP: None
+  
+  # Селектор подов
+  selector:
+    app: clickhouse
+  
+  # Порты
+  ports:
+  - name: http
+    port: 8123
+    targetPort: 8123
+  - name: native
+    port: 9000
+    targetPort: 9000
+  - name: interserver
+    port: 9009
+    targetPort: 9009

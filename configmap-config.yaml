@@ -1,0 +1,86 @@
+# =============================================================================
+# ConfigMap для основной конфигурации ClickHouse
+# =============================================================================
+# Содержит настройки сервера ClickHouse (config.xml)
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: clickhouse-server-config
+  labels:
+    app: clickhouse
+data:
+  # -----------------------------------------------------------------------------
+  # Основной конфигурационный файл ClickHouse
+  # -----------------------------------------------------------------------------
+  config.xml: |
+    <?xml version="1.0"?>
+    lickhouse>
+        <!-- Настройки логирования -->
+        <logger>
+            <!-- Уровень логирования: trace, debug, information, warning, error -->
+            <level>information</level>
+            
+            <!-- Путь к файлу логов -->
+            <log>/var/log/clickhouse-server/clickhouse-server.log</log>
+            
+            <!-- Путь к файлу логов ошибок -->
+            <errorlog>/var/log/clickhouse-server/clickhouse-server.err.log</errorlog>
+            
+            <!-- Размер файла лога перед ротацией -->
+            <size>1000M</size>
+            
+            <!-- Количество файлов логов для хранения -->
+            unt>10</count>
+        </logger>
+        
+        <!-- HTTP порт для API -->
+        <http_port>8123</http_port>
+        
+        <!-- TCP порт для native protocol -->
+        <tcp_port>9000</tcp_port>
+        
+        <!-- Interserver HTTP порт для репликации -->
+        <interserver_http_port>9009</interserver_http_port>
+        
+        <!-- Адрес для прослушивания (0.0.0.0 = все интерфейсы) -->
+        <listen_host>::</listen_host>
+        
+        <!-- Максимальное количество одновременных подключений -->
+        <max_connections>4096</max_connections>
+        
+        <!-- Максимальное количество одновременных запросов -->
+        <max_concurrent_queries>100</max_concurrent_queries>
+        
+        <!-- Часовой пояс сервера -->
+        <timezone>Europe/Moscow</timezone>
+        
+        <!-- Путь к данным -->
+        <path>/var/lib/clickhouse/</path>
+        
+        <!-- Путь к временным данным -->
+        <tmp_path>/var/lib/clickhouse/tmp/</tmp_path>
+        
+        <!-- Путь к файлам пользователей -->
+        <users_config>/etc/clickhouse-server/users.xml</users_config>
+        
+        <!-- Настройки памяти -->
+        <mark_cache_size>5368709120</mark_cache_size>
+        
+        <!-- Настройки сжатия -->
+        mpression>
+            ase>
+                <!-- Метод сжатия: lz4, zstd, none -->
+                <method>lz4</method>
+            </case>
+        </compression>
+        
+        <!-- Настройки для распределенных таблиц -->
+        <distributed_ddl>
+            <!-- Путь в ZooKeeper для DDL операций -->
+            <path>/clickhouse/task_queue/ddl</path>
+        </distributed_ddl>
+        
+        <!-- Форматы для вывода данных -->
+        <format_schema_path>/var/lib/clickhouse/format_schemas/</format_schema_path>
+    </clickhouse>

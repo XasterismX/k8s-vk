@@ -1,0 +1,140 @@
+# =============================================================================
+# StatefulSet для развертывания ClickHouse
+# =============================================================================
+# StatefulSet обеспечивает стабильную идентификацию подов и упорядоченное
+# развертывание, что критично для stateful приложений как базы данных
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: clickhouse
+  labels:
+    app: clickhouse
+spec:
+  # Имя сервиса для управления сетевой идентичностью подов
+  serviceName: "clickhouse-service"
+  
+  # Количество реплик (подов) ClickHouse
+  replicas: 1
+  
+  # Селектор для идентификации подов, управляемых этим StatefulSet
+  selector:
+    matchLabels:
+      app: clickhouse
+  
+  # Шаблон для создания подов
+  template:
+    metadata:
+      labels:
+        app: clickhouse
+    spec:
+      # Контейнеры в поде
+      containers:
+      - name: clickhouse-server
+        # Образ ClickHouse (версия указывается из values.yaml)
+        image: clickhouse/clickhouse-server:24.3
+        
+        # Политика загрузки образа
+        imagePullPolicy: IfNotPresent
+        
+        # Порты, которые открывает контейнер
+        ports:
+        - name: http
+          containerPort: 8123
+          protocol: TCP
+        - name: native
+          containerPort: 9000
+          protocol: TCP
+        - name: interserver
+          containerPort: 9009
+          protocol: TCP
+        
+        # Монтирование volumes в контейнер
+        volumeMounts:
+        # Основное хранилище данных ClickHouse
+        - name: data
+          mountPath: /var/lib/clickhouse
+        
+        # Конфигурация пользователей
+        - name: users-config
+          mountPath: /etc/clickhouse-server/users.xml
+          subPath: users.xml
+        
+        # Конфигурация сервера
+        - name: server-config
+          mountPath: /etc/clickhouse-server/config.xml
+          subPath: config.xml
+        
+        # Проверка готовности контейнера к приему трафика
+        readinessProbe:
+          # HTTP GET запрос для проверки
+          httpGet:
+            path: /ping
+            port: 8123
+          # Начальная задержка перед первой проверкой
+          initialDelaySeconds: 30
+          # Интервал между проверками
+          periodSeconds: 10
+          # Таймаут проверки
+          timeoutSeconds: 5
+          # Количество успешных проверок для признания готовности
+          successThreshold: 1
+          # Количество неудачных проверок для признания неготовности
+          failureThreshold: 3
+        
+        # Проверка живости контейнера
+        livenessProbe:
+          httpGet:
+            path: /ping
+            port: 8123
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+        
+        # Ограничения ресурсов для контейнера
+        resources:
+          # Максимальные лимиты
+          limits:
+            cpu: "2000m"
+            memory: "4Gi"
+          # Гарантированные ресурсы
+          requests:
+            cpu: "1000m"
+            memory: "2Gi"
+        
+        # Переменные окружения
+        env:
+        # Отключение встроенных пользователей (используем кастомных)
+        - name: CLICKHOUSE_DB
+          value: "default"
+      
+      # Volumes, используемые подом
+      volumes:
+      # ConfigMap с конфигурацией пользователей
+      - name: users-config
+        configMap:
+          name: clickhouse-users-config
+      
+      # ConfigMap с конфигурацией сервера
+      - name: server-config
+        configMap:
+          name: clickhouse-server-config
+  
+  # Шаблон для создания PersistentVolumeClaim для каждого пода
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      # Режим доступа к volume
+      accessModes: 
+        - ReadWriteOnce
+      
+      # StorageClass (если не указан, используется default)
+      # storageClassName: "standard"
+      
+      # Запрашиваемый размер хранилища
+      resources:
+        requests:
+          storage: 10Gi

@@ -1,0 +1,113 @@
+# =============================================================================
+# ConfigMap для пользователей ClickHouse
+# =============================================================================
+# Этот ConfigMap содержит конфигурацию пользователей и их прав доступа.
+# Генерируется на основе параметров из values.yaml
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: clickhouse-users-config
+  labels:
+    app: clickhouse
+data:
+  # -----------------------------------------------------------------------------
+  # Файл users.xml определяет пользователей ClickHouse
+  # -----------------------------------------------------------------------------
+  users.xml: |
+    <?xml version="1.0"?>
+    lickhouse>
+        <!-- Определение пользователей -->
+        <users>
+            <!-- Администратор с полными правами -->
+            <admin>
+                <!-- Пароль в plaintext (для production используйте password_sha256_hex) -->
+                <password>SecurePassword123!</password>
+                
+                <!-- Сети, с которых разрешен доступ -->
+                <networks>
+                    <ip>::/0</ip>
+                </networks>
+                
+                <!-- Профиль настроек для пользователя -->
+                <profile>default</profile>
+                
+                <!-- Квота использования ресурсов -->
+                <quota>default</quota>
+            </admin>
+            
+            <!-- Пользователь только для чтения -->
+            <readonly>
+                <password>ReadOnlyPass456!</password>
+                <networks>
+                    <ip>::/0</ip>
+                </networks>
+                
+                <!-- Профиль с ограничениями только на чтение -->
+                <profile>readonly</profile>
+                <quota>default</quota>
+            </readonly>
+            
+            <!-- Пользователь для приложений -->
+            <app_user>
+                <password>AppUserPass789!</password>
+                <networks>
+                    <ip>::/0</ip>
+                </networks>
+                <profile>default</profile>
+                <quota>default</quota>
+            </app_user>
+        </users>
+        
+        <!-- Профили определяют ограничения и настройки для пользователей -->
+        <profiles>
+            <!-- Стандартный профиль -->
+            <default>
+                <!-- Максимальный объем памяти для запроса -->
+                <max_memory_usage>10000000000</max_memory_usage>
+                
+                <!-- Режим распределенных DDL запросов -->
+                <distributed_ddl_task_timeout>180</distributed_ddl_task_timeout>
+                
+                <!-- Логирование запросов -->
+                <log_queries>1</log_queries>
+            </default>
+            
+            <!-- Профиль для readonly пользователя -->
+            <readonly>
+                <!-- Запретить DDL операции (CREATE, DROP, ALTER) -->
+                <readonly>1</readonly>
+                
+                <!-- Ограничение памяти для readonly пользователя -->
+                <max_memory_usage>5000000000</max_memory_usage>
+                
+                <!-- Максимальное время выполнения запроса (секунды) -->
+                <max_execution_time>300</max_execution_time>
+            </readonly>
+        </profiles>
+        
+        <!-- Квоты определяют лимиты использования ресурсов -->
+        <quotas>
+            <default>
+                <!-- Интервал для подсчета квоты (1 час = 3600 секунд) -->
+                <interval>
+                    <duration>3600</duration>
+                    
+                    <!-- Максимальное количество запросов в интервал -->
+                    <queries>10000</queries>
+                    
+                    <!-- Максимальное количество ошибок в интервал -->
+                    <errors>1000</errors>
+                    
+                    <!-- Максимальное количество прочитанных строк -->
+                    <result_rows>100000000</result_rows>
+                    
+                    <!-- Максимальный объем прочитанных данных (байты) -->
+                    <read_rows>100000000</read_rows>
+                    
+                    <!-- Максимальное время выполнения всех запросов (секунды) -->
+                    <execution_time>9000</execution_time>
+                </interval>
+            </default>
+        </quotas>
+    </clickhouse>
