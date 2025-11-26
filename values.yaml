@@ -1,0 +1,8 @@
+image:
+  tag: 23.8.4.30-stable
+
+users:
+  - name: user1
+    password: "pass1"
+  - name: user2
+    password: "pass2"

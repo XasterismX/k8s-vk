@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: clickhouse-config
+data:
+  # конфигурация сервера ClickHouse
+  config.xml: |
+    <!-- базовый конфиг сервера -->
+    <yandex>
+      <logger>
+        <level>trace</level>
+        <log>/var/log/clickhouse-server/clickhouse-server.log</log>
+      </logger>
+    </yandex>
+
+  # настройка пользователей берётся из users.xml ниже
+  users.xml: |
+    <yandex>
+    {{- range $index, $user := .Values.users }}
+      <user>
+        <name>{{ $user.name }}</name>
+        <password>{{ $user.password }}</password>
+        <networks>
+          <ip>::/0</ip>
+        </networks>
+      </user>
+    {{- end }}
+    </yandex>
